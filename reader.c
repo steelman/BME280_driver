@@ -32,7 +32,7 @@
 #include "log.h"
 
 static int keep_running = 1;
-
+static int delay = 5000;	/* milliseconds */
 
 static void delay_ms(uint32_t period)
 {
@@ -48,10 +48,10 @@ void stop_running(int signum, siginfo_t *si, void *uctx)
 	keep_running = 0;
 }
 
-int help(const char *prog)
+int help(const char *prog, int ret)
 {
 	fprintf(stderr, "Usage: %s [OPTION] DEVICE\n", prog);
-	return 0;
+	return ret;
 }
 
 int version()
@@ -77,12 +77,14 @@ int main(int ac, char *av[])
 
 	enum {
 		ARG_VERSION = 0x100,
+		ARG_DELAY,
 	};
 	static const struct option options[] = {
 		{"help",    no_argument, NULL, 'h' },
 		{"version", no_argument, NULL, ARG_VERSION },
 		{"oneshot", no_argument, NULL, '1' },
 		{"debug",   no_argument, NULL, 'd' },
+		{"delay",   required_argument, NULL, ARG_DELAY }
 	};
 
 	while (1) {
@@ -91,20 +93,29 @@ int main(int ac, char *av[])
 			break;
 		switch(c) {
 		case 'h':
-			return help(av[0]);
+			return help(av[0], 0);
 		case ARG_VERSION:
 			return version();
 		case 'd':
 			log_set_max_level(LOG_DEBUG);
 			break;
 		case '1':
-			keep_running = 0;		      
+			keep_running = 0;
+			delay = 0;
+			break;
+		case ARG_DELAY: {
+			char *p;
+			delay = strtol(optarg, &p, 10);
+			if (*p != '\0')
+				return help(av[0], -1);
+			delay = (delay < 100) ? 100 : delay;
+		}
+
 		}
 	}
-	
+
 	if (optind >= ac) {
-		help(av[0]);
-		return -1;
+		return help(av[0], -1);
 	}
 
 	ret = bp_i2c_init(av[optind]);
@@ -158,7 +169,7 @@ int main(int ac, char *av[])
 			 data.pressure, data.temperature, data.humidity);
 		fprintf(stdout, "pressure %d\ntemperature %d\nhumidity %d\n",
 			data.pressure, data.temperature, data.humidity);
-		sensor.delay_ms(5000);
+		sensor.delay_ms(delay);
 	} while (keep_running);
 
 error:
@@ -166,4 +177,3 @@ error:
 out:
 	return ret;
 }
-     

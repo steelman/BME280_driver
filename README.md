@@ -1,3 +1,15 @@
+# BusPirate driver
+
+The `bus-pirate` branch in this repository contains code allowing
+access to the BME280 sensor, as well as other I²C devices, through a
+[BusPirate](https://dangerousprototypes.com/docs/Bus_Pirate)
+device. The communication is rather slow, one or two readout per
+second, but it seems to be enough for most environment monitoring
+applications.
+
+The BusPirate driver (`bp.c` file) itself is mostly complete, but the
+reader application will receive some more attention.
+
 # BME280 sensor API
 ## Introduction
 This package contains the Bosch Sensortec's BME280 pressure sensor driver (sensor API)
